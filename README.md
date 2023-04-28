@@ -25,6 +25,7 @@ The code requires a consistent folder structure which can exist in any user-defi
   - countyfips
     - input
       - countyfips_landcoverchange_year1_year2.tif.vat.dbf
+      
 where,
 
 - countyfips = first 4-letters of the county, followed by an underscore and the 5-digit county fips. (Ex: Sussex, DE 10005 = suss_10005)
