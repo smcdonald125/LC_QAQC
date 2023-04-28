@@ -14,9 +14,9 @@ User arguments: The script expects at least 2 command line arguments from the us
         2. cf of county of interest. To run multiple counties at once, enter all cfs separated by a space.
 Example: To run all 3 Delaware counties (suss_10005, newc_10003, kent_10001) whose folders exist in C:/landcover and the script lives
          in C:/code, type the following in the conda command prompt and hit enter:
-            python C:/code/toLCC_matrices.py C:/landcover suss_10005, newc_10003, kent_10001
+            python C:/code/LCC_matrices.py C:/landcover suss_10005, newc_10003, kent_10001
 
-        - The results will exist in C:/landcover/cf/input/QAQC/cf__LC_matrices.xlsx
+        - The results will exist in C:/landcover/cf/input/QAQC/cf_LC_matrices.xlsx
         - ANY cells in red need correction.
         - All cells in yellow should be reviewed for potential correction.
 Author: Sarah McDonald, Geographer, U.S. Geological Survey, Chesapeake Bay Program
