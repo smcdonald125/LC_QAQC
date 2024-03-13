@@ -1,0 +1,55 @@
+[folders]
+    landuse_24ed = "" # parent folder containing cf folders of the new 2024 edition data
+    landuse_22ed = "" # parent folder containing cf folders of the published 2022 edition data
+    qaqc = "" # folder to write matrices to
+    logging = "" # path to folder to write log file
+    
+[lookup]
+    lcchange = "" # path to LC change raster lookup
+    lc_dates = "" # path to table with t1, t2, and t3 mapped years by cofips
+
+[logging]
+    name = "LCC_QA_log.txt" # path to log file to create or append to
+
+[LC_abbrev]
+    "Water" = "WATR"
+    "Emergent Wetlands" = "EMWT"
+    "Tree Canopy" = "TREE"
+    "Shrubland" = "SHRU"
+    "Low Vegetation" = "LVEG"
+    "Barren" = "BARR"
+    "Impervious Structures" = "IMPS"
+    "Other Impervious" = "IMPO"
+    "Impervious Roads" = "ROAD"
+    "Tree Canopy Over Impervious Structures" = "TCIS"
+    "Tree Canopy Over Other Impervious" = "TCIO"
+    "Tree Canopy Over Impervious Roads" = "TCIR"
+    "Aberdeen Proving Ground" = "ABPG"
+
+[colors]
+    [colors.red]
+        hex = "FF1300"
+        transitions   = [
+                            ['Emergent Wetlands', 'Low Vegetation'], 
+                            ['Low Vegetation', 'Emergent Wetlands'],
+                        ]
+
+    [colors.yellow]  
+        hex   = "EDFF00"
+        transitions = [
+            ['Impervious Roads', 'Barren'],
+            ['Impervious Roads', 'Low Vegetation'],
+            ['Impervious Roads', 'Emergent Wetlands'],
+            ['Impervious Roads', 'Shrubland'],
+            ['Impervious Roads', 'Tree Canopy'],
+            ['Impervious Structures', 'Barren'],
+            ['Impervious Structures', 'Low Vegetation'],
+            ['Impervious Structures', 'Emergent Wetlands'],
+            ['Impervious Structures', 'Shrubland'],
+            ['Impervious Structures', 'Tree Canopy'],
+            ['Other Impervious', 'Barren'],
+            ['Other Impervious', 'Low Vegetation'],
+            ['Other Impervious', 'Emergent Wetlands'],
+            ['Other Impervious', 'Shrubland'],
+            ['Other Impervious', 'Tree Canopy'],
+        ]
