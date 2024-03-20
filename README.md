@@ -54,6 +54,7 @@ The config.toml file is the only file that should be edited by a user. The varia
   a comma (no spaces). For example, to pass caro_51033 and balt_24005, pass caro_51033,balt_24005
 
   --cofips-lookup Path to CSV table containing a column of cofips to QA. Requires --column-name to be passed.
+  
   --column-name Name of column in cofips-lookup containing cofips to QA. Requires --cofips-lookup to be passed.
 
 ### Example Run
@@ -66,17 +67,29 @@ Using a CSV:
 ## Interpreting Results
 ### Land Cover Abbreviations
 WATR = Water
+
 EMWT = Emergent Wetlands
+
 TREE = Tree Canopy
+
 SHRU = Shrubland
+
 LVEG = Low Vegetation
+
 BARR = Barren
+
 IMPS = Impervious Structures
+
 IMPO = Other Impervious
+
 ROAD = Impervious Roads
+
 TCIS = Tree Canopy Over Impervious Structures
+
 TCIO = Tree Canopy Over Other Impervious
+
 TCIR = Tree Canopy Over Impervious Roads
+
 ABPG = Aberdeen Proving Ground
 
 ### File Description
@@ -112,6 +125,7 @@ Transitions that are highlighted in red should not exist. If any cells are highl
 required fix. This is not a reason to halt the QA of the county.
 
 #### Versioning Errors
-Another perspective to QA change is by comparing the change from the 2024 version with the 2022 version for the T1-T2 change period. Looking at this tab, since it is already normalized to the amount of change, we can quickly see if there are any significant differences. 
+Another perspective to QA change is by comparing the change from the 2024 version with the 2022 version for the T1-T2 change period. 
+Looking at this tab, since it is already normalized to the amount of change, we can quickly see if there are any significant differences. 
 
 TBD- are any of these that we'd expect? Check with UVM? For example, lveg-shrub
