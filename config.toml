@@ -5,8 +5,8 @@
     logging = "" # path to folder to write log file
     
 [lookup]
-    lcchange = "" # path to LC change raster lookup
-    lc_dates = "" # path to table with t1, t2, and t3 mapped years by cofips
+    lcchange = "lcchange_lookup_2024ed.csv" # path to LC change raster lookup (2024 edition)
+    lc_dates = "landcover_dates.csv" # path to table with t1, t2, and t3 mapped years by cofips
 
 [logging]
     name = "LCC_QA_log.txt" # path to log file to create or append to
@@ -52,4 +52,5 @@
             ['Other Impervious', 'Emergent Wetlands'],
             ['Other Impervious', 'Shrubland'],
             ['Other Impervious', 'Tree Canopy'],
+            ['Low Vegetation', 'Water']
         ]

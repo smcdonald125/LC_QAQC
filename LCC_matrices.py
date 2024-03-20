@@ -13,7 +13,7 @@ from openpyxl.styles import (
 )
 
 
-def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference:bool=False):
+def addStyle(path:str, sheets:list, classes:list, colors:dict=None, sheet_type:str='matrix'):
     """
     addStyle This method identifies cells in the matrices that are unlikely and need verification (yellow) and incorrect
              transitions (red) and color codes them.
@@ -28,8 +28,8 @@ def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference
         list of unique LC classes
     colors : dict, optional, default is None
         dictionary of LC transitions and the color to assign.
-    isDifference : bool, optional, default is False
-        If isDifference is set to true, what thresholds do I use?
+    sheet_type : str, optional, default is matrix
+        Sheet type. Options: matrix, difference, totals
     """     
 
     # excel
@@ -37,7 +37,7 @@ def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference
     for i in range(len(sheets)):
         cur_sheet = worksheet[sheets[i]]
 
-        if not isDifference:
+        if sheet_type =='matrix':
             for color in colors:
                 # pattern to fill 
                 fmtFillPattern = PatternFill(start_color=colors[color]['hex'],fill_type='solid')
@@ -54,6 +54,8 @@ def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference
                         if (cell.row, cell.col_idx) in xy:
                             if cell.value > 0:
                                 cell.fill = fmtFillPattern
+        
+        # TODO add style to totals and differenced matrix
 
         # apply whole number format and borders around all cells
         thin = Side(border_style="thin", color="000000")
@@ -61,8 +63,12 @@ def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference
             for cell in row:  
                 cell.border = Border(top=thin, left=thin, right=thin, bottom=thin)  
                 if cell.column > 1: # skip left index
-                    # one decimal point, show commas, negative numbers are parenthesis
-                    cell.number_format = '_(* #,##0.0_);_(* (#,##0.0);_(* "-"??_);_(@_)' # display as whole number without rounding true values
+
+                    if sheet_type == 'difference': # represents a percentage, negative numbers are parenthesis, 0 is a dash
+                        cell.number_format = '_(* 0.00%_);_(* (0.00%);_(* "-"??_);_(@_)'
+                    else:
+                        # one decimal point, show commas, negative numbers are parenthesis, 0 is a dash
+                        cell.number_format = '_(* #,##0.0_);_(* (#,##0.0);_(* "-"??_);_(@_)' # display as whole number without rounding true values
                     
                     # bold totals columns
                     if cur_sheet.cell(cell.row, 1).value in ['Decrease', 'Increase', 'Net Change']:
@@ -70,23 +76,20 @@ def addStyle(path:str, sheets:list, classes:list, colors:dict=None, isDifference
                 else:
                     cell.font = Font(bold=True)
 
-        # # adjust column size
-        # for col in cur_sheet.columns:
-        #     max_length = 0
-        #     column = col[0].column_letter # Get the column name
-        #     for cell in col:
-        #         try: # Necessary to avoid error on empty cells
-        #             if len(str(cell.value)) > max_length:
-        #                 max_length = len(str(cell.value))
-        #         except:
-        #             pass
-        #     adjusted_width = (max_length + 2) * 1.2
-        #     cur_sheet.column_dimensions[column].width = adjusted_width
+        # adjust column size
+        max_length = 12
+        if sheet_type == 'totals':
+            max_length = 18
+        for col in cur_sheet.columns:
+            column = col[0].column_letter # Get the column name
+            if sheet_type == 'totals' and col[0].value == 'LandCover':
+                cur_sheet.column_dimensions[column].width = 35
+            else:
+                cur_sheet.column_dimensions[column].width = max_length
 
     # save formatting
     worksheet.save(path)
     worksheet.close()
-
 
 def createMatrices(
                 data_folder:str,
@@ -96,7 +99,7 @@ def createMatrices(
                 version:str,
                 lcc_lookup:pd.DataFrame,
                 colors:dict,
-                lc_abbrev:dict=None):
+                lc_abbrev:dict=None) -> pd.DataFrame:
     """
     createMatrices This method locates the LCC raster attribute tables, converts them to change matrices, and
                    calls the addStyle method to color-code unlikely transitions. The values are in acres and 
@@ -123,6 +126,9 @@ def createMatrices(
     """
     # locate LC change paths
     input_folder = f"{data_folder}/{cf}/input"
+
+    # dataframe of LC totals
+    totals = []
 
     # read in change raster RATs and convert to change matrix
     matrices = []
@@ -152,6 +158,14 @@ def createMatrices(
                 'late'  : str(years[i+1]),
             })
         )
+        
+        # convert count (square meters) to acres
+        df.loc[:, "Acres"] = df['Count'] / 4046.86
+
+        # calculate totals
+        totals.append(
+            totals_helper(df, str(years[i]), str(years[i+1]), version)
+        )
 
         # if abbrevation dictionary - replace names with abbreviations
         if lc_abbrev is not None:
@@ -164,9 +178,6 @@ def createMatrices(
         else:
             # list of all unique classes
             classes = lcc_lookup['early'].unique().tolist()
-
-        # convert count (square meters) to acres
-        df.loc[:, "Acres"] = df['Count'] / 4046.86
 
         # drop cols
         df = df[[f"{years[i]}", f"{years[i+1]}", "Acres"]]
@@ -197,7 +208,7 @@ def createMatrices(
         matrix.loc['Increase'] = matrix[classes].sum(axis=0)
         matrix.loc['Decrease'] = matrix['Decrease'].tolist()
         matrix.loc['Net Change'] = matrix.loc['Increase'] - matrix.loc['Decrease']
-        matrix.loc['Increase', 'Decrease'] = sum(matrix['Decrease'])
+        matrix.loc['Increase', 'Decrease'] = sum(matrix['Decrease'][0:len(classes)])
 
         # store results
         matrices.append(matrix.copy())
@@ -216,6 +227,131 @@ def createMatrices(
 
         # highlight cells that need double checking
         addStyle(qaqc_path, sheets, classes, colors)
+
+    # merge all totals dfs
+    total_df = None
+    for tot_df in totals:
+        if total_df is None:
+            total_df = tot_df.copy()
+        else:
+            total_df = (
+                total_df
+                .merge(tot_df, on='LandCover', how='outer')
+                .fillna(0.0)
+            )
+
+    # return totals
+    return total_df
+
+def totals_helper(lcc_df:pd.DataFrame, early:str, late:str, version:str) -> pd.DataFrame:
+    """
+    totals_helper 
+    
+    Calculate the total Land Cover, in acres, for the two static time periods represented in the change raster.
+
+    Parameters
+    ----------
+    lcc_df : pd.DataFrame
+        Table of acres of LC change classes.
+    early : str
+        Early year (i.e. 2014).
+    late : str
+        Late year (i.e. 2018).
+    version : str
+        Version of data being summarized (i.e. 2024ed)
+
+    Returns
+    -------
+    pd.DataFrame
+        Acres of total static land cover by class for the early and late dates represented in the LC change raster.
+    """
+
+    # make local copy
+    df = lcc_df.copy()
+
+    # copy no change values to late date
+    df.loc[df[late].isna(), late] = df[early]
+
+    # calculate totals from the early date
+    early_tot = (
+        df
+        .filter(items=[early,'Acres'])
+        .groupby([early])
+        .sum()
+        .reset_index()
+        .rename(columns={
+            'Acres' : f"{early}_{early[2:]}{late[2:]}_{version}",
+            early : "LandCover"
+        })
+    )
+
+    # calculate totals for the late date
+    late_tot = (
+        df
+        .filter(items=[late,'Acres'])
+        .groupby([late])
+        .sum()
+        .reset_index()
+        .rename(columns={
+            'Acres' : f"{late}_{early[2:]}{late[2:]}_{version}",
+            late : "LandCover"
+        })
+    )
+
+    # merge data
+    totals = (
+        early_tot
+        .merge(late_tot, on='LandCover', how='outer')
+        .fillna(0.0)
+    )
+
+    # return data
+    return totals
+
+def write_static_totals(df22:pd.DataFrame, df24:pd.DataFrame, qaqc_path:str):
+    """
+    write_static_totals _summary_
+
+    Parameters
+    ----------
+    df22 : pd.DataFrame
+        _description_
+    df24 : pd.DataFrame
+        _description_
+    qaqc_path : str
+        _description_
+    """
+    # merge LC totals
+    all_totals = (
+        df24
+        .merge(df22, on='LandCover', how='outer')
+        .fillna(0.0)
+    )
+
+    # total mapped area
+    all_totals = (
+        all_totals
+        .set_index('LandCover')
+    )
+
+    # add totals row
+    all_totals.loc['Total Acres'] = all_totals.sum(axis=0)
+
+    # organize columns
+    columns = list(all_totals)
+    columns.sort()
+    all_totals = all_totals[columns]
+
+    # write totals
+    with pd.ExcelWriter(qaqc_path, mode='a') as writer:
+        sheet = f"LC_Totals" 
+        all_totals.to_excel(writer, sheet_name=sheet, index=True)
+
+    # add style
+    addStyle(qaqc_path, 
+             sheets=[sheet], 
+             classes=[], 
+             sheet_type='totals')
 
 
 def difference_matrices(
@@ -253,8 +389,14 @@ def difference_matrices(
         .set_index(str(year1))
     )
 
+    # store total change in most recent version
+    tot_change = df1.loc['Increase', 'Decrease']
+
     # difference data
     df1 = df1 - df2
+
+    # normalize by total change in most recent version
+    df1 = df1 / tot_change
 
     # write results
     sheet = f"{year1}-{year2}_{versions[0]}-{versions[1]}" 
@@ -265,4 +407,4 @@ def difference_matrices(
     addStyle(qaqc_path, 
              sheets=[sheet], 
              classes=list(df1.columns[0:-1]), 
-             isDifference=True)
+             sheet_type='difference')

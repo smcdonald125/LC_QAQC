@@ -1,0 +1,11 @@
+name: lcc_qaqc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy=1.26
+  - pandas=2.2
+  - geopandas-base=0.14
+  - openpyxl=3.1
+  - toml=0.10

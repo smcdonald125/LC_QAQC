@@ -14,7 +14,8 @@ from logging_config import (
 
 from LCC_matrices import (
     createMatrices,
-    difference_matrices
+    difference_matrices,
+    write_static_totals
 )
 
 # Capture warnings to logging
@@ -30,6 +31,7 @@ if __name__=="__main__":
         description="Interface for running automated Land Cover Change QAQC. Default expects any number of cofips, separated by a space. An optional alternative is to pass a path to a table with a list of cofips.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
+
     parser.add_argument(
         '--cfs',
         type=str,
@@ -40,14 +42,14 @@ if __name__=="__main__":
         '--cofips-lookup',
         type=str,
         default=None,
-        help="Path to CSV table containing a column of cofips to QA."
+        help="Path to CSV table containing a column of cofips to QA. Requires --column-name to be passed."
     )
 
     parser.add_argument(
         '--column-name',
         type=str,
         default=None,
-        help="Name of column in cofips-lookup containing cofips to QA."
+        help="Name of column in cofips-lookup containing cofips to QA. Requires --cofips-lookup to be passed."
     )
 
     # parse arguments
@@ -128,7 +130,7 @@ if __name__=="__main__":
 
         # create matrices for new data
         logger.info(f"{cf} Creating matrices for 2024 edition")
-        createMatrices(
+        total_df24 = createMatrices(
                 data_folder=config['folders']['landuse_24ed'],
                 qaqc_path=output_path,
                 cf=cf,
@@ -140,7 +142,7 @@ if __name__=="__main__":
         
         # create matrix for old data
         logger.info(f"{cf} Creating matrices for 2022 edition")
-        createMatrices(
+        total_df22 = createMatrices(
                 data_folder=config['folders']['landuse_22ed'],
                 qaqc_path=output_path,
                 cf=cf,
@@ -151,9 +153,17 @@ if __name__=="__main__":
                 lc_abbrev=config['LC_abbrev'])
         
         # difference T1-T2 matrices between versions
-        logger.info(f"{cf} Differecing matrices for T1-T2 ")
+        logger.info(f"{cf} Differecing matrices for T1-T2")
         difference_matrices(
                 qaqc_path=output_path,
                 year1=years[0],
                 year2=years[1],
                 versions=['2024ed', '2022ed'])
+        
+        # write total LC acres per class from each dataset and version
+        logger.info(f"{cf} Write LC totals")       
+        write_static_totals(
+            df24=total_df24,
+            df22=total_df22,
+            qaqc_path=output_path
+        )
