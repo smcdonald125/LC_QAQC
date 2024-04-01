@@ -108,7 +108,7 @@ if __name__=="__main__":
     lcc_lookup.drop('class', axis=1, inplace=True)
 
     # iterate cofips
-    for cf in cfs:
+    for i, cf in enumerate(cfs):
         logger.info(f"Starting {cf}")
 
         # get mapped years for county
@@ -116,7 +116,9 @@ if __name__=="__main__":
         output_path = f"{config['folders']['qaqc']}/{cf}_LCC_QA.xlsx"
 
         # replace transitions with abbreviations
-        if config['colors'] is not None:
+        #   Only needs to run for the first iteration of the loop
+        #    since we are overwriting a global configuration
+        if (config['colors'] is not None) and (i > 0):
             for col in config['colors']:
                 trans = config['colors'][col]['transitions']
                 new_trans = []
