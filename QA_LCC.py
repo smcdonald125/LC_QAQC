@@ -118,7 +118,7 @@ if __name__=="__main__":
         # replace transitions with abbreviations
         #   Only needs to run for the first iteration of the loop
         #    since we are overwriting a global configuration
-        if (config['colors'] is not None) and (i > 0):
+        if (config['colors'] is not None) and (i == 0):
             for col in config['colors']:
                 trans = config['colors'][col]['transitions']
                 new_trans = []
