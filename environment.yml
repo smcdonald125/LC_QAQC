@@ -7,5 +7,6 @@ dependencies:
   - numpy=1.26
   - pandas=2.2
   - geopandas-base=0.14
+  - pyogrio=0.2
   - openpyxl=3.1
   - toml=0.10
