@@ -219,7 +219,7 @@ def createMatrices(
         mode = 'a'
         if not os.path.isfile(qaqc_path):
             mode = 'w'
-        with pd.ExcelWriter(qaqc_path, mode=mode) as writer:
+        with pd.ExcelWriter(qaqc_path, mode=mode, engine='openpyxl') as writer:
             for i in range(len(matrices)):
                 sheet = f"{years[i]}-{years[i+1]}-{version}" 
                 matrices[i].to_excel(writer, sheet_name=sheet, index=True)
@@ -343,7 +343,7 @@ def write_static_totals(df22:pd.DataFrame, df24:pd.DataFrame, qaqc_path:str):
     all_totals = all_totals[columns]
 
     # write totals
-    with pd.ExcelWriter(qaqc_path, mode='a') as writer:
+    with pd.ExcelWriter(qaqc_path, mode='a', engine='openpyxl') as writer:
         sheet = f"LC_Totals" 
         all_totals.to_excel(writer, sheet_name=sheet, index=True)
 
@@ -400,7 +400,7 @@ def difference_matrices(
 
     # write results
     sheet = f"{year1}-{year2}_{versions[0]}-{versions[1]}" 
-    with pd.ExcelWriter(qaqc_path, mode='a') as writer:
+    with pd.ExcelWriter(qaqc_path, mode='a', engine='openpyxl') as writer:
         df1.to_excel(writer, sheet_name=sheet, index=True)
 
     # add style
